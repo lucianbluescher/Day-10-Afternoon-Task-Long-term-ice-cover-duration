@@ -21,14 +21,20 @@ madison_meteor <- read.csv(here("data", "ntl33_v7.csv"))
 
 ice_duration_graph <- madison_meteor |> 
   select(ice_duration, lakeid) |> 
-  filter(ice_duration != -999) |> 
+  filter(ice_duration != -999)
+
+# Find the Mean
+ice_duration_mean <- ice_duration_graph |> 
   group_by(lakeid) |> 
-  summarise(mean(ice_duration, na.rm = TRUE))
+  summarise(duration_mean = (mean(ice_duration)))
 
-ggplot(data = ice_duration_graph, aes(x = lakeid, y = mean)
+ggplot(data = ice_duration_graph, 
+       aes(x = lakeid, y = ice_duration)) +
+  geom_jitter(size = 0.5) +
+  stat_summary(fun = mean, geom = "point", color = "blue", size = 5, shape = 18)
 
 
- 
+colnames(ice_duration_graph)
  
 
 
