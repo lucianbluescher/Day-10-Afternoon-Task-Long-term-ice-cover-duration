@@ -6,6 +6,7 @@ format: html
 library(tidyverse)
 library(here)
 library(janitor)
+library(ggplot2)
 ```
 
 
@@ -23,21 +24,68 @@ ice_duration_graph <- madison_meteor |>
   select(ice_duration, lakeid) |> 
   filter(ice_duration != -999)
 
-# Find the Mean
-ice_duration_mean <- ice_duration_graph |> 
-  group_by(lakeid) |> 
-  summarise(duration_mean = (mean(ice_duration)))
-
 ggplot(data = ice_duration_graph, 
        aes(x = lakeid, y = ice_duration)) +
   geom_jitter(size = 0.5) +
   stat_summary(fun = mean, geom = "point", color = "blue", size = 5, shape = 18)
 
+# Find the Mean ice duration of all lakes in area by year
+ice_duration_mean <- madison_meteor |> 
+  filter(ice_duration != -999) |> 
+  group_by(year4) |> 
+  summarise(duration_mean = (mean(ice_duration)))
 
-colnames(ice_duration_graph)
+# Graph mean
+
+ggplot(data = ice_duration_mean, 
+       aes(x = year4, y = duration_mean)) +
+  geom_jitter() +
+  scale_y_continuous(limits = c(50, 500), breaks = seq(50, 200, by = 25))
+
+# Here we can see ice duration decreasing over time
+
+# Find the mean air temperature (using the daily average air temperature - adjusted) in Madison Lake Area by year using only observations from winter months (December, January, February)
+
+air_temperature_mean <- madison_ice |> 
+  select(year4, ave_air_temp_adjusted, month) |> 
+  filter(month %in% c("11", "1", "2")) |> 
+  group_by(year4) |> 
+  summarise(year_mean = (mean(ave_air_temp_adjusted)))
+
+
+ggplot(data = air_temperature_mean, 
+       aes(x = year4, y = year_mean)) +
+  geom_jitter()
+
+# Temperature is increasing on no climate change
+
+ice_air <- full_join(air_temperature_mean, ice_duration_mean)
+
+ggplot(data = ice_air, 
+       aes(x = duration_mean, y = year_mean)) +
+  geom_point()
+
+# Higher temperature = shorter duration
+
+#Explore thaw dates since 1970. Create a subset of the ice cover duration data since 1970 (ok to include 1970), then convert the ice_off column to a Date. Use lubridate::yday() to pull the numeric day of the year from that Date. Create an exploratory plot of the ice off day (numeric day-of-the-year) from 1970 - present. Add a sentence or two below this exploratory graph describing the overall trend(s) you observe.
+
+final <- madison_meteor |> 
+  filter(year4 >= "1970") |> 
+  mutate(ice_off = ymd(ice_off)) 
  
+finaldays <- final |> 
+  select(ice_off, year4) |> 
+  mutate(
+    ice_off = as.Date(ice_off),
+    ice_off_yday = yday(ice_off))
 
 
+ggplot(data = finaldays, 
+       aes(x = year4, y = ice_off_yday)) +
+  geom_point()
+
+
+# Looks the same as the other one tbh
 ```
 
 ```{r}
